@@ -1,6 +1,6 @@
 const {SlashCommandBuilder, EmbedBuilder} = require('@discordjs/builders')
 const fortune = require('./fortune.json')
-//const imageUrl = require('./imageurl.json')
+const imageUrl = require('./imageurl.json')
 
 const COMMAND_NAME = '타로'
 function getRandomInt(min, max) {
@@ -16,13 +16,7 @@ const callNickname = function (guild, user) {
         : user.username
 }
 const getTarotImage=(heading, number)=>{
-    const fileName = heading ? `${number}` : `-${number}`
-    const folderName = 'pokemon'
-    if(fileName){
-        return `https://raw.githubusercontent.com/marten-camp/maid-bot/main/src/commands/${COMMAND_NAME}/images/${folderName}/${fileName}.png`
-    }else{
-        return ''
-    }
+    return imageUrl.arcana[heading?'upward': 'downward'][number]
 }
 module.exports = {
     data: new SlashCommandBuilder()
