@@ -1,6 +1,15 @@
 const {SlashCommandBuilder, EmbedBuilder} = require('@discordjs/builders')
 const fortune = require('./fortune.json')
-const imageUrl = require('./imageurl.json')
+//const imageUrl = require('./imageurl.json')
+const getTarotImage=(heading, number)=>{
+    const fileName = heading ? `${number}` : `-${number}`
+    const folderName = 'pokemon'
+    if(fileName){
+        return `https://raw.githubusercontent.com/marten-camp/maid-bot/main/src/commands/tarot/images/${folderName}/${fileName}.png`
+    }else{
+        return ''
+    }
+}
 
 function getRandomInt(min, max) {
     min = Math.ceil(min)
@@ -36,12 +45,10 @@ module.exports = {
         const once = arcana[number]
         const nickname = callNickname(guild, user)
 
+        const tarotImage = getTarotImage(heading, number)
+
         const imageEmbed = new EmbedBuilder()
-            .setImage(imageUrl.arcana[
-                heading
-                    ? 'upward'
-                    : 'downward'
-            ][number])
+            .setImage(tarotImage)
             .setTitle('당신이 뽑은 카드는')
             .setAuthor({name: nickname, iconURL: user.avatarURL(), url: user.avatarURL()})
             .setDescription(
