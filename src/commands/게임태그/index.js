@@ -1,4 +1,3 @@
-const fs = require('fs')
 const { SlashCommandBuilder } = require('@discordjs/builders')
 const { ActionRowBuilder, StringSelectMenuBuilder, PermissionsBitField, ButtonBuilder, ButtonStyle } = require('discord.js')
 
@@ -14,18 +13,28 @@ let pages = []
 let pageRow
 let leftPage=DIVISOR
 let currentPage
+const getLeftPage = function(currentPage){
+  if(currentPage === LAST_PAGE && REMAINDER > 0){
+    return REMAINDER
+  }else{
+    return DIVISOR
+  }
+}
 const roleFilter = (PermissionsBitField) => (role)=>{
     return role.color === 16735640 && !role.hoist && role.permissions.equals(new PermissionsBitField("0")) && !role.managed && role.mentionable
 }
+const getGameTagRoles = (guild)=>{
+  const guildRoles = guild.roles.cache
+  return guildRoles.filter(roleFilter(PermissionsBitField))
+}
 const getGameTagMenus=(interaction)=>{
   const {guild, member} = interaction
-  const guildRoles = guild.roles.cache
-  gameTagRoles = guildRoles.filter(roleFilter(PermissionsBitField))
+  gameTagRoles = getGameTagRoles(guild)
   const gameTagMenus = gameTagRoles.map((tag)=>{
     return {
       label: tag.name,
       value: tag.id,
-      default: false
+      default: false,
     }
   })
   member.roles.cache.filter(roleFilter(PermissionsBitField))
@@ -38,6 +47,15 @@ const getGameTagMenus=(interaction)=>{
         })
   return gameTagMenus
 }
+function createStringSelectMenu({currentPage, leftPage, gameTagMenus}) {
+  return new StringSelectMenuBuilder()
+    .setCustomId(`${COMMAND_NAME}:select${currentPage}`)
+    .setPlaceholder(`Page ${currentPage}`)
+    .setMinValues(0)
+    .setMaxValues(leftPage)
+    .setOptions(...gameTagMenus.slice((currentPage - 1) * DIVISOR, (currentPage - 1) * DIVISOR + leftPage));
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName(COMMAND_NAME)
@@ -49,38 +67,23 @@ module.exports = {
       await interaction.reply({ content: '불러올 게임 태그가 없습니다.', ephemeral: true })
       return
     }
+    // run 함수 내부에서 최상단에 위치
+    max = Math.min(gameTagMenus.length, 125);
+    LAST_PAGE = Math.ceil(max / DIVISOR);
+    REMAINDER = max % DIVISOR;
 
-    pages = []
-    max = gameTagMenus.length < 126 ? gameTagMenus.length : 125
-    LAST_PAGE = Math.ceil(max / DIVISOR)
-    REMAINDER = max % DIVISOR
-
-    for(let i = 1; i < LAST_PAGE+1; i++){
-      pages.push(new ButtonBuilder()
-          .setCustomId(`${COMMAND_NAME}:${i}`)
-          .setLabel('Page '+i)
-          .setStyle(ButtonStyle.Primary)
-        )
-    }
+    pages = Array.from({ length: LAST_PAGE }, (_, i) => new ButtonBuilder()
+      .setCustomId(`${COMMAND_NAME}:${i + 1}`)
+      .setLabel(`Page ${i + 1}`)
+      .setStyle(ButtonStyle.Primary));
 
     currentPage = 1
-    leftPage = DIVISOR
-    if(currentPage === LAST_PAGE && REMAINDER > 0){
-      leftPage = REMAINDER
-    }
+    const leftPage = getLeftPage(currentPage);
 
     pageRow = new ActionRowBuilder()
       .addComponents(...pages)
 
-    const gameRow = new ActionRowBuilder()
-    .addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId(`${COMMAND_NAME}:select${currentPage}`)
-        .setPlaceholder(`Page${currentPage}`)
-        .setMinValues(0)
-        .setMaxValues(leftPage)
-        .setOptions(...gameTagMenus.slice(0,leftPage))
-    )
+    const gameRow = new ActionRowBuilder().addComponents(createStringSelectMenu({currentPage, leftPage, gameTagMenus}))
     interaction.commandName = COMMAND_NAME
     await interaction.reply({ content: '"선호하는 게임"의 태그를 선택해주세요.', components: [gameRow, pageRow] , ephemeral: true })
   },
@@ -90,21 +93,11 @@ module.exports = {
     const { customId } = interaction
     const [commandName, action] = customId.split(':')
     currentPage = parseInt(action)
-    if(currentPage === LAST_PAGE && REMAINDER > 0){
-      leftPage = REMAINDER
-    }else{
-      leftPage = DIVISOR
-    }
-    const gameRow = new ActionRowBuilder()
-      .addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId(`${COMMAND_NAME}:select${currentPage}`)
-          .setPlaceholder(`Page${currentPage}`)
-          .setMinValues(0)
-          .setMaxValues(leftPage)
-          .setOptions(...gameTagMenus.slice((currentPage-1)*DIVISOR,(currentPage-1)*DIVISOR+leftPage))
-      )
-			await interaction.update({ content: '"선호하는 게임"의 태그를 선택해주세요.', components: [gameRow, pageRow], ephemeral: true })
+    const leftPage = getLeftPage(currentPage);
+    
+    const gameRow = new ActionRowBuilder().addComponents(createStringSelectMenu({currentPage, leftPage, gameTagMenus}))
+
+    await interaction.update({ content: '"선호하는 게임"의 태그를 선택해주세요.', components: [gameRow, pageRow], ephemeral: true })
   },
   // interaction.isStringSelectMenu()
   async runMenu(interaction){
@@ -113,11 +106,8 @@ module.exports = {
     const [commandName, action] = customId.split(':')
     if (action.startsWith('select')) {
       currentPage = parseInt(action.replace('select', ''))
-      if(currentPage === LAST_PAGE && REMAINDER > 0){
-        leftPage = REMAINDER
-      }else{
-        leftPage = DIVISOR
-      }
+
+      const leftPage = getLeftPage(currentPage);
 
       [...gameTagRoles].slice((currentPage-1)*DIVISOR,(currentPage-1)*DIVISOR+leftPage)
         .forEach((role, index)=>{
@@ -130,15 +120,7 @@ module.exports = {
           }
         })
 
-      const gameRow = new ActionRowBuilder()
-        .addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId(`${COMMAND_NAME}:select${currentPage}`)
-            .setPlaceholder(`Page${currentPage}`)
-            .setMinValues(0)
-            .setMaxValues(leftPage)
-            .setOptions(...gameTagMenus.slice((currentPage-1)*DIVISOR,(currentPage-1)*DIVISOR+leftPage))
-        )
+      const gameRow = new ActionRowBuilder().addComponents(createStringSelectMenu({currentPage, leftPage, gameTagMenus}));
       
       interaction.commandName = COMMAND_NAME
       await interaction.update({ content: '"선호하는 게임"의 태그를 선택해주세요.', components: [gameRow, pageRow], ephemeral: true, commandName: COMMAND_NAME});
