@@ -1,16 +1,8 @@
 const {SlashCommandBuilder, EmbedBuilder} = require('@discordjs/builders')
 const fortune = require('./fortune.json')
 //const imageUrl = require('./imageurl.json')
-const getTarotImage=(heading, number)=>{
-    const fileName = heading ? `${number}` : `-${number}`
-    const folderName = 'pokemon'
-    if(fileName){
-        return `https://raw.githubusercontent.com/marten-camp/maid-bot/main/src/commands/tarot/images/${folderName}/${fileName}.png`
-    }else{
-        return ''
-    }
-}
 
+const COMMAND_NAME = '타로'
 function getRandomInt(min, max) {
     min = Math.ceil(min)
     max = Math.floor(max)
@@ -23,10 +15,18 @@ const callNickname = function (guild, user) {
         ? member.displayName
         : user.username
 }
-
+const getTarotImage=(heading, number)=>{
+    const fileName = heading ? `${number}` : `-${number}`
+    const folderName = 'pokemon'
+    if(fileName){
+        return `https://raw.githubusercontent.com/marten-camp/maid-bot/main/src/commands/${COMMAND_NAME}/images/${folderName}/${fileName}.png`
+    }else{
+        return ''
+    }
+}
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('타로')
+        .setName(COMMAND_NAME)
         .setDescription('타로점'),
     run: async (interaction) => {
         const botProfile = {
