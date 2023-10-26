@@ -4,7 +4,7 @@ const { ActionRowBuilder, StringSelectMenuBuilder, PermissionsBitField, ButtonBu
 
 //상수
 const DIVISOR = 25 // 한 페이지에 표시되는 게임 개수. 최대 25
-const COMMAND_NAME = 'gtag'
+const COMMAND_NAME = '게임태그'
 
 let max
 let LAST_PAGE

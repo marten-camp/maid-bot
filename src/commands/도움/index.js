@@ -5,7 +5,7 @@ const readme = fs.readFileSync('README.md').toString()
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('help')
+    .setName('도움')
     .setDescription('도움말'),
   async run(interaction) {
     await interaction.reply({

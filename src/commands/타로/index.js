@@ -26,7 +26,7 @@ const callNickname = function (guild, user) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('tarot')
+        .setName('타로')
         .setDescription('타로점'),
     run: async (interaction) => {
         const botProfile = {
