@@ -16,7 +16,7 @@ const callNickname = function (guild, user) {
         : user.username
 }
 const getTarotImage=(heading, number)=>{
-    return imageUrl.arcana[heading?'upward': 'downward'][number]
+    return imageUrl.arcana[heading?'upward':'downward'][number]
 }
 module.exports = {
     data: new SlashCommandBuilder()
