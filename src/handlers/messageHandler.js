@@ -20,7 +20,7 @@ module.exports = async (message) => {
 
         if (messageHandler && typeof messageHandler.data?.channelWord === 'string' && typeof messageHandler.run === 'function') {
 
-          const regex = new RegExp(messageHandler['channelWord'], 'i')
+          const regex = new RegExp(messageHandler.data['channelWord'], 'i')
 
           if (!regex.test(channel.name)) return
 
